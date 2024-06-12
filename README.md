@@ -13,7 +13,7 @@
 2. Создайте и активируйте виртуальное окружение:
     ```bash
     python -m venv venv
-    source venv/bin/activate  # Для Windows: venv\Scripts\activate
+    source venv/bin/activate  
     ```
 
 3. Установите зависимости:
@@ -23,33 +23,8 @@
 
 ## Использование
 
-Запустите функцию `print_last_executed_operations` с указанием файла `operations.json`:
+Запустите функцию `reading_filter_sorting` с указанием файла `operations.json`:
 ```python
-from operations.operations import print_last_executed_operations
+from operations.operations import reading_filter_sorting
 
-print_last_executed_operations('operations.json')
-Тестирование
-Для запуска тестов используйте команду:
-
-bash
-Copy code
-pytest
-perl
-Copy code
-
-### Шаг 8: Загрузка на GitHub
-
-1. Добавьте все файлы в репозиторий и сделайте первый коммит:
-    ```bash
-    git add .
-    git commit -m "Initial commit"
-    ```
-
-2. Добавьте удаленный репозиторий и отправьте изменения:
-    ```bash
-    git remote add origin <url вашего репозитория>
-    git push -u origin develop
-    git push -u origin main
-    ```
-
-Теперь ваш проект готов и соответствует всем критериям.
+reading_filter_sorting('operations.json')
