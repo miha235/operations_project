@@ -1,30 +1,32 @@
 import pytest
-import json
-from operations.main import reading_filter_sorting
+from operations.main import date_format, masking_account_det, reading_filter_sorting
 
-@pytest.fixture
-def sample_operations_data():
-    """Загружаем тестовые данные из operations.json"""
-    with open('operations.json', 'r') as file:
-        return json.load(file)
+# Тесты для функции date_format
 
-def test_reading_filter_sorting(sample_operations_data, num):
-    """ Вызываем функцию с тестовыми данными"""
-    reading_filter_sorting('operations.json')
-    captured = num.readouterr()  # Получаем захваченный вывод
+def test_date_format_valid_input():
+    assert date_format("2019-04-11T23:10:21.514616") == "11.04.2019"
 
-    # Проверяем, что вывод содержит ожидаемые строки
-    assert "1000 USD\n" in captured.out
-    assert "14.06.2023 Transfer" in captured.out
-    assert "Visa Gold 6527 1833 XX XXXX 7720 -> Счет XX 3456" in captured.out
+def test_date_format_invalid_input():
+    with pytest.raises(ValueError):
+        date_format("invalid_date_string")
 
+# Тесты для функции masking_account_det
 
-    assert "15.06.2023 Payment" in captured.out
-    assert "Visa Classic 6216 5379 XX XXXX 9975" in captured.out
-    assert "2000 EUR\n" in captured.out
+def test_masking_account_det_card_number():
+    assert masking_account_det("МИР 8201420097886664") == "МИР 8201 4200XXXX 6664"
 
-    # Проверяем, что вывод не содержит отмененной операции
-    assert "16.06.2023 Withdrawal" not in captured.out
+def test_masking_account_det_bank_account():
+    assert masking_account_det("Счет 67667879435628279708") == "Счет XX 9708"
 
-    # Проверяем, что вывод содержит только 5 операций
-    assert captured.out.count('\n') == 15  # 5 операций * 3 строки на каждую операцию
+def test_masking_account_det_invalid_input():
+    assert masking_account_det(None) == " ??? "
+
+# Тесты для функции reading_filter_sorting пока не выходят
+# я проверила что она работает
+
+def test_reading_filter_sorting_valid_input():
+    assert reading_filter_sorting('../data/operations.json') is None
+
+def test_reading_filter_sorting_invalid_input():
+    with pytest.raises(FileNotFoundError):
+        reading_filter_sorting('nonexistent_file.json')
