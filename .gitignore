@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.env/
+venv/
+.vscode/
+.idea/
+.DS_Store
+*.log
+.coverage
+.hypothesis/
+.ipynb_checkpoints
+*.sql
+*.sqlite
+*.json
+
