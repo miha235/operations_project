@@ -62,5 +62,5 @@ def reading_filter_sorting(filename):
         print(f"{amount} {currency}\n")
 
 
-reading_filter_sorting('operations.json')
+reading_filter_sorting('../operations.json')
 
