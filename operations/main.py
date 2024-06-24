@@ -32,15 +32,22 @@ def reading(filename):
         return file_data
 
 
-def filter_sorting(file_data):
+def filtering(file_data):
     executed_operations = []
     for data in file_data:
         if data.get('state') == 'EXECUTED':
             executed_operations.append(data)
+    return executed_operations
 
+
+def sorting(executed_operations):
     executed_operations.sort(key=lambda x: x['date'], reverse=True)
 
     last_operations = executed_operations[:5]
+    return last_operations
+
+
+def formatting(last_operations):
     formatted_operations = []
 
     for operation in last_operations:
@@ -62,6 +69,7 @@ def filter_sorting(file_data):
 
     return formatted_operations
 
+
 def print_operations(operations):
     for operation in operations:
         print(f"{operation['date']} {operation['description']}")
@@ -69,7 +77,9 @@ def print_operations(operations):
         print(f"{operation['amount']} {operation['currency']}\n")
 
 
-file_data = reading('../data/operations.json')
-
-formatted_operations = filter_sorting(file_data)
-print_operations(formatted_operations)
+if __name__ == "__main__":
+    file_data = reading('../data/operations.json')
+    executed_operations = filtering(file_data)
+    sorted_operations = sorting(executed_operations)
+    formatted_operations = formatting(sorted_operations)
+    print_operations(formatted_operations)

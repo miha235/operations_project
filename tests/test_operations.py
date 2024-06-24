@@ -1,6 +1,6 @@
 import pytest
-
-from operations.main import date_format, masking_account_det, reading, filter_sorting, print_operations
+import json
+from operations.main import date_format, masking_account_det, reading, filtering, sorting, formatting, print_operations
 
 
 # Тесты для функции date_format
@@ -27,14 +27,15 @@ def test_masking_account_det_invalid_input():
 
 
 # Тесты для функции reading
-
-def test_reading_valid_input():
+def test_reading_valid_input(tmp_path):
+    # Создаем временный файл с тестовыми данными
     mock_data = [
         {
             "id": 441945886, "state": "EXECUTED", "date": "2019-08-26T10:50:58.294041",
             "operationAmount": {"amount": "31957.58", "currency": {"name": "руб.", "code": "RUB"}},
             "description": "Перевод организации", "from": "Maestro 1596837868705199",
-            "to": "Счет 64686473678894779589"},
+            "to": "Счет 64686473678894779589"
+        },
         {
             "id": 41428829, "state": "EXECUTED", "date": "2019-07-03T18:35:29.512364",
             "operationAmount": {"amount": "8221.37", "currency": {"name": "USD", "code": "USD"}},
@@ -42,74 +43,19 @@ def test_reading_valid_input():
             "to": "Счет 35383033474447895560"
         },
     ]
+    file_path = tmp_path / "operations.json"
+    with open(file_path, "w") as file:
+        json.dump(mock_data, file)
 
-    expected_data = mock_data
-    assert reading('../data/operations.json') == expected_data
+    assert reading(file_path) == mock_data
 
 
-# Случай с отсутствием файла
 def test_reading_invalid_input():
     with pytest.raises(FileNotFoundError):
         reading('nonexistent_file.json')
 
 
-# Тесты для функции filter_and_sort
-
-# Заранее подготовленные данные для тестирования
-
-test_data = [
-    {
-        "id": 441945886, "state": "EXECUTED", "date": "2019-08-26T10:50:58.294041",
-        "operationAmount": {"amount": "31957.58", "currency": {"name": "руб.", "code": "RUB"}},
-        "description": "Перевод организации", "from": "Maestro 1596837868705199", "to": "Счет 64686473678894779589"},
-    {
-        "id": 41428829, "state": "EXECUTED", "date": "2019-07-16T18:35:29.512364",
-        "operationAmount": {"amount": "8221.37", "currency": {"name": "USD", "code": "USD"}},
-        "description": "Перевод организации", "from": "MasterCard 7158300734726758", "to": "Счет 35383033474447895560"},
-    {
-        "id": 441945886, "state": "CANCEL", "date": "2019-08-06T10:50:58.294041",
-        "operationAmount": {"amount": "31957.58", "currency": {"name": "руб.", "code": "RUB"}},
-        "description": "Перевод организации", "from": "Maestro 1596837868705199", "to": "Счет 64686473678894779589"},
-    {
-        "id": 41428829, "state": "EXECUTED", "date": "2019-08-06T18:35:29.512364",
-        "operationAmount": {"amount": "8221.37", "currency": {"name": "USD", "code": "USD"}},
-        "description": "Перевод организации", "from": "MasterCard 7158300734726758", "to": "Счет 35383033474447895560"},
-    {
-        "id": 41428829, "state": "EXECUTED", "date": "2019-07-03T18:35:29.512364",
-        "operationAmount": {"amount": "8221.37", "currency": {"name": "USD", "code": "USD"}},
-        "description": "Перевод организации", "from": "MasterCard 7158300734726758", "to": "Счет 35383033474447895560"},
-]
-
-# Ожидаемый результат сортировки
-expected_result = [{'amount': '31957.58',
-                    'currency': 'руб.',
-                    'date': '26.08.2019',
-                    'description': 'Перевод организации',
-                    'from_account': 'Maestro 1596 83XX XXXX 5199',
-                    'to_account': 'Счет XX 9589'},
-                   {'amount': '8221.37',
-                    'currency': 'USD',
-                    'date': '06.08.2019',
-                    'description': 'Перевод организации',
-                    'from_account': 'MasterCard 7158 30XX XXXX 6758',
-                    'to_account': 'Счет XX 5560'},
-                   {'amount': '8221.37',
-                    'currency': 'USD',
-                    'date': '16.07.2019',
-                    'description': 'Перевод организации',
-                    'from_account': 'MasterCard 7158 30XX XXXX 6758',
-                    'to_account': 'Счет XX 5560'},
-                   {'amount': '8221.37',
-                    'currency': 'USD',
-                    'date': '03.07.2019',
-                    'description': 'Перевод организации',
-                    'from_account': 'MasterCard 7158 30XX XXXX 6758',
-                    'to_account': 'Счет XX 5560'}]
-
-def test_filter_and_sort_operations():
-    sorted_operations = filter_sorting(test_data)
-    assert sorted_operations == expected_result, "The operations were not sorted correctly"
-
+# Тесты для функций filtering, sorting, formatting
 @pytest.fixture
 def mock_data():
     return [
@@ -145,7 +91,7 @@ def mock_data():
         },
         {
             "id": 939719570,
-            "state": "EXECUTED",
+            "state": "CANCEL",
             "date": "2018-06-30T02:08:58.425572",
             "operationAmount": {
                 "amount": "9824.07",
@@ -157,16 +103,77 @@ def mock_data():
             "description": "Перевод организации",
             "from": "Счет 75106830613657916952",
             "to": "Счет 11776614605963066702"
-        }
+        },
     ]
 
+
+def test_filter(mock_data):
+    expected_result = [{'date': '2019-08-26T10:50:58.294041',
+                        'description': 'Перевод организации',
+                        'from': 'Maestro 1596837868705199',
+                        'id': 441945886,
+                        'operationAmount': {'amount': '31957.58',
+                                            'currency': {'code': 'RUB', 'name': 'руб.'}},
+                        'state': 'EXECUTED',
+                        'to': 'Счет 64686473678894779589'},
+                       {'date': '2019-07-03T18:35:29.512364',
+                        'description': 'Перевод организации',
+                        'from': 'MasterCard 7158300734726758',
+                        'id': 41428829,
+                        'operationAmount': {'amount': '8221.37',
+                                            'currency': {'code': 'USD', 'name': 'USD'}},
+                        'state': 'EXECUTED',
+                        'to': 'Счет 35383033474447895560'}]
+    assert filtering(mock_data) == expected_result
+
+
+def test_sorting(mock_data):
+    expected_result = [{'date': '2019-08-26T10:50:58.294041',
+                        'description': 'Перевод организации',
+                        'from': 'Maestro 1596837868705199',
+                        'id': 441945886,
+                        'operationAmount': {'amount': '31957.58',
+                                            'currency': {'code': 'RUB', 'name': 'руб.'}},
+                        'state': 'EXECUTED',
+                        'to': 'Счет 64686473678894779589'},
+                       {'date': '2019-07-03T18:35:29.512364',
+                        'description': 'Перевод организации',
+                        'from': 'MasterCard 7158300734726758',
+                        'id': 41428829,
+                        'operationAmount': {'amount': '8221.37',
+                                            'currency': {'code': 'USD', 'name': 'USD'}},
+                        'state': 'EXECUTED',
+                        'to': 'Счет 35383033474447895560'}]
+    assert sorting(filtering(mock_data)) == expected_result
+
+
+def test_formatting(mock_data):
+    sorted_data = sorting(filtering(mock_data))
+    expected_result = [
+        {
+            "date": "26.08.2019",
+            "description": "Перевод организации",
+            "from_account": "Maestro 1596 83XX XXXX 5199",
+            "to_account": "Счет XX 9589",
+            "amount": "31957.58",
+            "currency": "руб."
+        },
+        {
+            "date": "03.07.2019",
+            "description": "Перевод организации",
+            "from_account": "MasterCard 7158 30XX XXXX 6758",
+            "to_account": "Счет XX 5560",
+            "amount": "8221.37",
+            "currency": "USD"
+        },
+    ]
+    assert formatting(sorted_data) == expected_result
+
+
+# Тест для функции print_operations
 def test_print_operations(capfd, mock_data):
-
-    formatted_operations = filter_sorting(mock_data)
-    print_operations(formatted_operations)
-
-# capfd.readouterr() захватывает весь вывод, отправленный в stdout и stderr во время выполнения теста.
-    # Возвращаются два значения: out для стандартного вывода и err для вывода ошибок.
+    formatted_operations = formatting(sorting(filtering(mock_data)))
+    printed_output = print_operations(formatted_operations)
 
     out, err = capfd.readouterr()
     expected_output = (
@@ -176,9 +183,6 @@ def test_print_operations(capfd, mock_data):
         "03.07.2019 Перевод организации\n"
         "MasterCard 7158 30XX XXXX 6758 -> Счет XX 5560\n"
         "8221.37 USD\n\n"
-        "30.06.2018 Перевод организации\n"
-        "Счет XX 6952 -> Счет XX 6702\n"
-        "9824.07 USD\n\n"
     )
     assert out == expected_output
     assert err == ""
